@@ -46,7 +46,7 @@ export default function Quiz() {
         {/* Progress */}
         <div className="mb-6">
           <div className="flex justify-between text-sm text-foreground/60 mb-2">
-            <span>Frage {current + 1} von {QUESTIONS.length}</span>
+            <span>Question {current + 1} of {QUESTIONS.length}</span>
             <span>{question.category}</span>
           </div>
           <div className="w-full h-2 bg-foreground/10 rounded-full overflow-hidden">
@@ -101,7 +101,7 @@ function Results({
       <div className="w-full max-w-2xl space-y-6">
         {/* Total score */}
         <div className="bg-foreground/5 rounded-2xl p-6 md:p-8 text-center">
-          <p className="text-sm text-foreground/50 uppercase tracking-widest mb-1">Gesamtergebnis</p>
+          <p className="text-sm text-foreground/50 uppercase tracking-widest mb-1">Overall Score</p>
           <p className="text-6xl font-bold mb-1">
             {total}
             <span className="text-2xl font-normal text-foreground/40">/60</span>
@@ -129,7 +129,7 @@ function Results({
 
         {/* Category breakdown */}
         <div className="bg-foreground/5 rounded-2xl p-6 md:p-8">
-          <h2 className="font-semibold text-base mb-4">Ergebnis nach Kategorie</h2>
+          <h2 className="font-semibold text-base mb-4">Score by Category</h2>
           <div className="space-y-4">
             {categoryScores.map(({ category, score, max, tier }) => {
               const pct = (score / max) * 100
@@ -157,7 +157,7 @@ function Results({
 
         {/* Per-category feedback */}
         <div className="bg-foreground/5 rounded-2xl p-6 md:p-8">
-          <h2 className="font-semibold text-base mb-4">Empfehlungen je Kategorie</h2>
+          <h2 className="font-semibold text-base mb-4">Recommendations by Category</h2>
           <div className="space-y-4">
             {categoryScores.map(({ category, tier }) => {
               const borderColor = tier === 'low' ? 'border-red-400' : tier === 'medium' ? 'border-yellow-400' : 'border-green-500'
@@ -180,7 +180,7 @@ function Results({
             onClick={onRestart}
             className="px-6 py-3 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors cursor-pointer"
           >
-            Quiz neu starten
+            Restart Quiz
           </button>
         </div>
       </div>

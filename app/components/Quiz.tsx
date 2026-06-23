@@ -12,6 +12,7 @@ import {
 } from '@/app/lib/quiz-data'
 
 export default function Quiz() {
+  const [started, setStarted] = useState(false)
   const [current, setCurrent] = useState(0)
   const [answers, setAnswers] = useState<number[]>(Array(QUESTIONS.length).fill(-1))
   const [done, setDone] = useState(false)
@@ -31,6 +32,28 @@ export default function Quiz() {
     setCurrent(0)
     setAnswers(Array(QUESTIONS.length).fill(-1))
     setDone(false)
+    setStarted(false)
+  }
+
+  if (!started) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
+        <div className="w-full max-w-2xl text-center">
+          <h1 className="text-3xl md:text-4xl font-bold mb-4">AI Readiness Check</h1>
+          <p className="text-foreground/70 text-base md:text-lg leading-relaxed mb-8 max-w-xl mx-auto">
+            This quiz assesses how ready your company is to adopt and scale AI. Answer{' '}
+            {QUESTIONS.length} questions across 5 key areas — from data readiness to culture —
+            and get a personalised score with actionable recommendations.
+          </p>
+          <button
+            onClick={() => setStarted(true)}
+            className="px-8 py-4 rounded-xl bg-blue-500 text-white text-base font-semibold hover:bg-blue-600 transition-colors cursor-pointer"
+          >
+            Start Quiz
+          </button>
+        </div>
+      </div>
+    )
   }
 
   if (done) {

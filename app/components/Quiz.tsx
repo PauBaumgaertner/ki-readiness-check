@@ -11,6 +11,7 @@ import {
   getCategoryScore,
   getCategoryTier,
 } from '@/app/lib/quiz-data'
+import LeadForm from '@/app/components/LeadForm'
 
 export default function Quiz() {
   const [started, setStarted] = useState(false)
@@ -239,11 +240,14 @@ function Results({
           </div>
         </div>
 
+        {/* Lead form */}
+        <LeadForm answers={answers} />
+
         {/* Restart */}
         <div className="flex justify-center pb-10">
           <button
             onClick={onRestart}
-            className="px-6 py-3 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors cursor-pointer"
+            className="px-6 py-3 rounded-xl bg-foreground/10 text-foreground/70 text-sm font-semibold hover:bg-foreground/20 transition-colors cursor-pointer"
           >
             Quiz neu starten
           </button>

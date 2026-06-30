@@ -6,6 +6,7 @@ import {
   CATEGORIES,
   CATEGORY_MAX,
   CATEGORY_FEEDBACK,
+  TOTAL_MAX,
   getResultBand,
   getCategoryScore,
   getCategoryTier,
@@ -14,13 +15,12 @@ import {
 export default function Quiz() {
   const [started, setStarted] = useState(false)
   const [current, setCurrent] = useState(0)
-  const [answers, setAnswers] = useState<number[]>(Array(QUESTIONS.length).fill(-1))
+  const [answers, setAnswers] = useState<(number | string)[]>(
+    QUESTIONS.map((q) => (q.type === 'choice' ? -1 : ''))
+  )
   const [done, setDone] = useState(false)
 
-  function handleAnswer(points: number) {
-    const next = [...answers]
-    next[current] = points
-    setAnswers(next)
+  function advance() {
     if (current + 1 < QUESTIONS.length) {
       setCurrent(current + 1)
     } else {
@@ -28,9 +28,22 @@ export default function Quiz() {
     }
   }
 
+  function handleChoiceAnswer(points: number) {
+    const next = [...answers]
+    next[current] = points
+    setAnswers(next)
+    advance()
+  }
+
+  function handleTextChange(value: string) {
+    const next = [...answers]
+    next[current] = value
+    setAnswers(next)
+  }
+
   function restart() {
     setCurrent(0)
-    setAnswers(Array(QUESTIONS.length).fill(-1))
+    setAnswers(QUESTIONS.map((q) => (q.type === 'choice' ? -1 : '')))
     setDone(false)
     setStarted(false)
   }
@@ -39,17 +52,17 @@ export default function Quiz() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
         <div className="w-full max-w-2xl text-center">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">AI Readiness Check</h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-4">KI-Readiness-Check</h1>
           <p className="text-foreground/70 text-base md:text-lg leading-relaxed mb-8 max-w-xl mx-auto">
-            This quiz assesses how ready your company is to adopt and scale AI. Answer{' '}
-            {QUESTIONS.length} questions across 5 key areas — from data readiness to culture —
-            and get a personalised score with actionable recommendations.
+            Dieser Quiz zeigt euch, wie bereit euer Unternehmen für KI ist. Beantwortet{' '}
+            {QUESTIONS.length} Fragen in 3 Kategorien — und erhaltet eine persönliche Einschätzung
+            mit konkreten Empfehlungen.
           </p>
           <button
             onClick={() => setStarted(true)}
             className="px-8 py-4 rounded-xl bg-blue-500 text-white text-base font-semibold hover:bg-blue-600 transition-colors cursor-pointer"
           >
-            Start Quiz
+            Quiz starten
           </button>
         </div>
       </div>
@@ -61,7 +74,7 @@ export default function Quiz() {
   }
 
   const question = QUESTIONS[current]
-  const progress = ((current) / QUESTIONS.length) * 100
+  const progress = (current / QUESTIONS.length) * 100
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
@@ -69,7 +82,7 @@ export default function Quiz() {
         {/* Progress */}
         <div className="mb-6">
           <div className="flex justify-between text-sm text-foreground/60 mb-2">
-            <span>Question {current + 1} of {QUESTIONS.length}</span>
+            <span>Frage {current + 1} von {QUESTIONS.length}</span>
             <span>{question.category}</span>
           </div>
           <div className="w-full h-2 bg-foreground/10 rounded-full overflow-hidden">
@@ -86,17 +99,35 @@ export default function Quiz() {
             {question.text}
           </p>
 
-          <div className="flex flex-col gap-3">
-            {question.options.map((option) => (
+          {question.type === 'choice' ? (
+            <div className="flex flex-col gap-3">
+              {question.options.map((option) => (
+                <button
+                  key={option.points}
+                  onClick={() => handleChoiceAnswer(option.points)}
+                  className="text-left w-full px-5 py-4 rounded-xl border border-foreground/10 bg-background hover:bg-blue-500 hover:text-white hover:border-blue-500 transition-all duration-150 text-sm md:text-base cursor-pointer"
+                >
+                  {option.text}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <textarea
+                value={answers[current] as string}
+                onChange={(e) => handleTextChange(e.target.value)}
+                placeholder={question.placeholder}
+                rows={4}
+                className="w-full px-4 py-3 rounded-xl border border-foreground/10 bg-background text-sm md:text-base resize-none focus:outline-none focus:border-blue-500 transition-colors"
+              />
               <button
-                key={option.points}
-                onClick={() => handleAnswer(option.points)}
-                className="text-left w-full px-5 py-4 rounded-xl border border-foreground/10 bg-background hover:bg-blue-500 hover:text-white hover:border-blue-500 transition-all duration-150 text-sm md:text-base cursor-pointer"
+                onClick={advance}
+                className="self-end px-6 py-3 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors cursor-pointer"
               >
-                {option.text}
+                Weiter →
               </button>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -107,10 +138,13 @@ function Results({
   answers,
   onRestart,
 }: {
-  answers: number[]
+  answers: (number | string)[]
   onRestart: () => void
 }) {
-  const total = answers.reduce((sum, a) => sum + Math.max(a, 0), 0)
+  const total = answers.reduce<number>(
+    (sum, a) => sum + (typeof a === 'number' && a >= 0 ? a : 0),
+    0
+  )
   const band = getResultBand(total)
 
   const categoryScores = CATEGORIES.map((cat) => {
@@ -124,10 +158,10 @@ function Results({
       <div className="w-full max-w-2xl space-y-6">
         {/* Total score */}
         <div className="bg-foreground/5 rounded-2xl p-6 md:p-8 text-center">
-          <p className="text-sm text-foreground/50 uppercase tracking-widest mb-1">Overall Score</p>
+          <p className="text-sm text-foreground/50 uppercase tracking-widest mb-1">Gesamtergebnis</p>
           <p className="text-6xl font-bold mb-1">
             {total}
-            <span className="text-2xl font-normal text-foreground/40">/60</span>
+            <span className="text-2xl font-normal text-foreground/40">/{TOTAL_MAX}</span>
           </p>
           <div className={`inline-block mt-2 px-4 py-1 rounded-full text-white text-sm font-semibold ${band.color}`}>
             {band.label}
@@ -138,26 +172,32 @@ function Results({
           <div className="mt-5 w-full h-3 bg-foreground/10 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-700 ${band.color}`}
-              style={{ width: `${(total / 60) * 100}%` }}
+              style={{ width: `${(total / TOTAL_MAX) * 100}%` }}
             />
           </div>
           <div className="flex justify-between text-xs text-foreground/40 mt-1">
             <span>0</span>
+            <span>5</span>
+            <span>10</span>
             <span>15</span>
-            <span>30</span>
-            <span>45</span>
-            <span>60</span>
+            <span>{TOTAL_MAX}</span>
           </div>
         </div>
 
         {/* Category breakdown */}
         <div className="bg-foreground/5 rounded-2xl p-6 md:p-8">
-          <h2 className="font-semibold text-base mb-4">Score by Category</h2>
+          <h2 className="font-semibold text-base mb-4">Score nach Kategorie</h2>
           <div className="space-y-4">
             {categoryScores.map(({ category, score, max, tier }) => {
               const pct = (score / max) * 100
-              const barColor = tier === 'low' ? 'bg-red-400' : tier === 'medium' ? 'bg-yellow-400' : 'bg-green-500'
-              const labelColor = tier === 'low' ? 'text-red-500 font-medium' : tier === 'medium' ? 'text-amber-500' : 'text-green-600'
+              const barColor =
+                tier === 'low' ? 'bg-red-400' : tier === 'medium' ? 'bg-yellow-400' : 'bg-green-500'
+              const labelColor =
+                tier === 'low'
+                  ? 'text-red-500 font-medium'
+                  : tier === 'medium'
+                    ? 'text-amber-500'
+                    : 'text-green-600'
               return (
                 <div key={category}>
                   <div className="flex justify-between text-sm mb-1">
@@ -180,11 +220,13 @@ function Results({
 
         {/* Per-category feedback */}
         <div className="bg-foreground/5 rounded-2xl p-6 md:p-8">
-          <h2 className="font-semibold text-base mb-4">Recommendations by Category</h2>
+          <h2 className="font-semibold text-base mb-4">Empfehlungen nach Kategorie</h2>
           <div className="space-y-4">
             {categoryScores.map(({ category, tier }) => {
-              const borderColor = tier === 'low' ? 'border-red-400' : tier === 'medium' ? 'border-yellow-400' : 'border-green-500'
-              const titleColor = tier === 'low' ? 'text-red-500' : tier === 'medium' ? 'text-amber-500' : 'text-green-600'
+              const borderColor =
+                tier === 'low' ? 'border-red-400' : tier === 'medium' ? 'border-yellow-400' : 'border-green-500'
+              const titleColor =
+                tier === 'low' ? 'text-red-500' : tier === 'medium' ? 'text-amber-500' : 'text-green-600'
               return (
                 <div key={category} className={`border-l-2 ${borderColor} pl-4`}>
                   <p className={`text-sm font-semibold mb-1 ${titleColor}`}>{category}</p>
@@ -203,7 +245,7 @@ function Results({
             onClick={onRestart}
             className="px-6 py-3 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors cursor-pointer"
           >
-            Restart Quiz
+            Quiz neu starten
           </button>
         </div>
       </div>

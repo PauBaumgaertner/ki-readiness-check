@@ -2,6 +2,9 @@ import { type NextRequest } from 'next/server'
 import { createServerSupabase } from '@/app/lib/supabase-server'
 import { QUESTIONS } from '@/app/lib/quiz-data'
 
+// Enthält ein @, davor mind. 1 Zeichen, danach eine Domain mit Punkt
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 export async function POST(request: NextRequest) {
   let body: unknown
   try {
@@ -20,12 +23,15 @@ export async function POST(request: NextRequest) {
   if (typeof email !== 'string' || !email.trim()) {
     return Response.json({ error: 'E-Mail fehlt' }, { status: 422 })
   }
+  if (!EMAIL_PATTERN.test(email.trim())) {
+    return Response.json({ error: 'Bitte gib eine gültige E-Mail-Adresse ein' }, { status: 422 })
+  }
   if (!Array.isArray(answers) || answers.length !== QUESTIONS.length) {
     return Response.json({ error: 'Ungültige Antworten' }, { status: 422 })
   }
 
   const payload: Record<string, unknown> = {
-    email: email.trim(),
+    email: email.trim().toLowerCase(),
     phone: typeof phone === 'string' && phone.trim() ? phone.trim() : null,
   }
 
@@ -36,7 +42,12 @@ export async function POST(request: NextRequest) {
   })
 
   const supabase = createServerSupabase()
-  const { error } = await supabase.from('quiz_responses').insert(payload)
+  // upsert statt insert: existiert die E-Mail schon (UNIQUE constraint),
+  // wird die bestehende Zeile mit den neuen Antworten überschrieben statt
+  // einen Duplikat-Datensatz anzulegen.
+  const { error } = await supabase
+    .from('quiz_responses')
+    .upsert(payload, { onConflict: 'email' })
 
   if (error) {
     console.error('[submit-quiz]', error)

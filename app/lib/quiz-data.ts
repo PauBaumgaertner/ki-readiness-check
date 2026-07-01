@@ -160,6 +160,9 @@ export interface ResultBand {
   label: string
   description: string
   color: string
+  /** Tailwind text-color class, used as `currentColor` for the SVG score ring */
+  ring: string
+  emoji: string
 }
 
 export const RESULT_BANDS: ResultBand[] = [
@@ -168,24 +171,32 @@ export const RESULT_BANDS: ResultBand[] = [
     description:
       'Euer Unternehmen steht am Anfang der KI-Reise. Bevor eine sinnvolle KI-Nutzung möglich wird, braucht es grundlegende Vorarbeit in Wissen, Struktur und Daten.',
     color: 'bg-red-500',
+    ring: 'text-red-500',
+    emoji: '🌱',
   },
   {
     label: 'Erste Schritte',
     description:
       'Ihr habt begonnen, aber es gibt noch erhebliche Lücken. Ein strukturierter Ansatz wird euch deutlich schneller voranbringen.',
     color: 'bg-orange-400',
+    ring: 'text-orange-400',
+    emoji: '🔧',
   },
   {
     label: 'Auf dem Weg',
     description:
       'Gute Fortschritte in mehreren Bereichen. Adressiert die verbleibenden Schwachstellen — und ihr seid bereit für echte KI-Projekte.',
     color: 'bg-yellow-400',
+    ring: 'text-yellow-400',
+    emoji: '📈',
   },
   {
     label: 'KI-bereit',
     description:
       'Euer Unternehmen ist gut aufgestellt, um KI einzuführen und zu skalieren. Baut auf euren Stärken auf und haltet den Schwung.',
     color: 'bg-green-500',
+    ring: 'text-green-500',
+    emoji: '🚀',
   },
 ]
 
@@ -234,3 +245,37 @@ export function getCategoryScore(
     return sum + (typeof answer === 'number' && answer >= 0 ? answer : 0)
   }, 0)
 }
+
+/**
+ * Micro-copy shown between questions (Zeigarnik effect / goal-gradient effect):
+ * keeps the felt distance to "done" short and reinforces momentum.
+ * Indexed by the current question's position (0-based).
+ */
+export const ENCOURAGEMENTS: string[] = [
+  'Los geht’s — 10 kurze Fragen, ca. 2 Minuten.',
+  'Gut gemacht — weiter so! 🚀',
+  'Erstes Drittel fast geschafft.',
+  'Kategorie 2: Umsetzung & Tools — weiter im Flow.',
+  'Du machst das richtig gut.',
+  'Genau die Hälfte geschafft! 🎉',
+  'Kategorie 3: Daten & Infrastruktur — letzte Etappe.',
+  'Nur noch 2 Fragen ...',
+  'Fast geschafft — eine letzte Frage danach!',
+  'Letzte Frage! Dein Ergebnis wartet. ✨',
+]
+
+/**
+ * Messages rotated through the brief "computing" screen after the last
+ * question. Builds anticipation (reciprocity primer) before the reveal.
+ */
+export const COMPUTING_MESSAGES: string[] = [
+  'Werte deine Antworten aus ...',
+  'Berechne deinen KI-Readiness-Score ...',
+  'Erstelle deine Empfehlungen ...',
+]
+
+/**
+ * Placeholder social-proof figure for the lead form. Replace with a real,
+ * verifiable number before going live — do not ship a fabricated statistic.
+ */
+export const SOCIAL_PROOF_COUNT = '100+'

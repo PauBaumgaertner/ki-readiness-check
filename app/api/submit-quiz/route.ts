@@ -1,6 +1,7 @@
 import { type NextRequest } from 'next/server'
 import { createServerSupabase } from '@/app/lib/supabase-server'
 import { QUESTIONS } from '@/app/lib/quiz-data'
+import { generateReport } from '@/app/lib/ai-report'
 
 // Enthält ein @, davor mind. 1 Zeichen, danach eine Domain mit Punkt
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -41,6 +42,17 @@ export async function POST(request: NextRequest) {
     payload[key] = answer === '' || answer === -1 ? null : answer
   })
 
+  // Gemini-Report erstellen. Schlägt das fehl (Rate-Limit, Timeout, ...),
+  // darf das den Lead nicht kosten — wir speichern trotzdem und liefern
+  // report: null zurück, das Frontend zeigt dann einen Fallback-Text.
+  let aiReport: string | null = null
+  try {
+    aiReport = await generateReport(answers as (number | string)[])
+  } catch (err) {
+    console.error('[submit-quiz] Gemini-Report fehlgeschlagen', err)
+  }
+  payload.ai_report = aiReport
+
   const supabase = createServerSupabase()
   // upsert statt insert: existiert die E-Mail schon (UNIQUE constraint),
   // wird die bestehende Zeile mit den neuen Antworten überschrieben statt
@@ -54,5 +66,5 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: error.message }, { status: 500 })
   }
 
-  return Response.json({ ok: true }, { status: 201 })
+  return Response.json({ ok: true, report: aiReport }, { status: 201 })
 }

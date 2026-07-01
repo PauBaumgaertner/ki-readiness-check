@@ -20,6 +20,7 @@ export default function LeadForm({ answers }: Props) {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [report, setReport] = useState<string | null>(null)
 
   async function handleSubmit() {
     if (!email.trim() || !consent) return
@@ -44,6 +45,8 @@ export default function LeadForm({ answers }: Props) {
         throw new Error(data.error ?? `HTTP ${res.status}`)
       }
 
+      const data = await res.json().catch(() => ({}))
+      setReport(typeof data.report === 'string' ? data.report : null)
       setSuccess(true)
     } catch (err) {
       console.error('[LeadForm]', err)
@@ -55,16 +58,32 @@ export default function LeadForm({ answers }: Props) {
 
   if (success) {
     return (
-      <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-6 md:p-8 text-center animate-pop-in">
-        <p className="text-3xl mb-2" aria-hidden="true">
-          🎉
-        </p>
-        <p className="text-green-700 dark:text-green-400 font-semibold leading-relaxed mb-1">
-          Geschafft! Dein persönlicher Report ist unterwegs.
-        </p>
-        <p className="text-sm text-green-700/70 dark:text-green-400/70 leading-relaxed">
-          Schau in den nächsten 24h in dein Postfach — wir melden uns per E-Mail.
-        </p>
+      <div className="space-y-4 animate-pop-in">
+        <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-6 md:p-8 text-center">
+          <p className="text-3xl mb-2" aria-hidden="true">
+            🎉
+          </p>
+          <p className="text-green-700 dark:text-green-400 font-semibold leading-relaxed mb-1">
+            Geschafft! Dein persönlicher Report ist da.
+          </p>
+          <p className="text-sm text-green-700/70 dark:text-green-400/70 leading-relaxed">
+            Wir haben ihn zusätzlich an deine E-Mail-Adresse geschickt.
+          </p>
+        </div>
+
+        <div className="bg-foreground/5 rounded-2xl p-6 md:p-8">
+          <h2 className="font-semibold text-base mb-3">Dein KI-Report</h2>
+          {report ? (
+            <div className="text-sm text-foreground/80 leading-relaxed whitespace-pre-line">
+              {report}
+            </div>
+          ) : (
+            <p className="text-sm text-foreground/60 leading-relaxed">
+              Dein Report wird gerade individuell erstellt und kommt innerhalb von 24h
+              per E-Mail nach — die Auswertung oben hast du ja schon.
+            </p>
+          )}
+        </div>
       </div>
     )
   }
@@ -157,7 +176,7 @@ export default function LeadForm({ answers }: Props) {
               <span className="loading-dot w-1.5 h-1.5 rounded-full bg-white inline-block" />
               <span className="loading-dot w-1.5 h-1.5 rounded-full bg-white inline-block" />
               <span className="loading-dot w-1.5 h-1.5 rounded-full bg-white inline-block" />
-              <span className="ml-1">Report wird vorbereitet ...</span>
+              <span className="ml-1">Dein Report wird erstellt ...</span>
             </span>
           ) : (
             'Report jetzt erhalten →'

@@ -7,9 +7,7 @@ import {
   getResultBand,
 } from '@/app/lib/quiz-data'
 import { generateAiReport } from '@/app/lib/mistral'
-
-// TODO: durch den echten Firmennamen ersetzen, sobald der feststeht.
-const COMPANY_NAME_PLACEHOLDER = '[Dein Firmenname]'
+import { COMPANY_NAME_PLACEHOLDER } from '@/app/lib/constants'
 
 function buildPrompt(answers: (number | string)[]): string {
   const total = answers.reduce<number>(

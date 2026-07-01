@@ -2,6 +2,7 @@ import { type NextRequest } from 'next/server'
 import { createServerSupabase } from '@/app/lib/supabase-server'
 import { QUESTIONS } from '@/app/lib/quiz-data'
 import { generateReport } from '@/app/lib/ai-report'
+import { sendReportEmail } from '@/app/lib/resend'
 
 // Enthält ein @, davor mind. 1 Zeichen, danach eine Domain mit Punkt
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -42,16 +43,27 @@ export async function POST(request: NextRequest) {
     payload[key] = answer === '' || answer === -1 ? null : answer
   })
 
-  // Gemini-Report erstellen. Schlägt das fehl (Rate-Limit, Timeout, ...),
+  // Mistral-Report erstellen. Schlägt das fehl (Rate-Limit, Timeout, ...),
   // darf das den Lead nicht kosten — wir speichern trotzdem und liefern
   // report: null zurück, das Frontend zeigt dann einen Fallback-Text.
   let aiReport: string | null = null
   try {
     aiReport = await generateReport(answers as (number | string)[])
   } catch (err) {
-    console.error('[submit-quiz] Gemini-Report fehlgeschlagen', err)
+    console.error('[submit-quiz] Mistral-Report fehlgeschlagen', err)
   }
   payload.ai_report = aiReport
+
+  // E-Mail-Versand ist ebenfalls nicht kritisch für den Lead: schlägt er
+  // fehl, wird nur geloggt — der Report steht dem Nutzer ja schon auf dem
+  // Bildschirm zur Verfügung.
+  if (aiReport) {
+    try {
+      await sendReportEmail(payload.email as string, aiReport)
+    } catch (err) {
+      console.error('[submit-quiz] E-Mail-Versand fehlgeschlagen', err)
+    }
+  }
 
   const supabase = createServerSupabase()
   // upsert statt insert: existiert die E-Mail schon (UNIQUE constraint),
